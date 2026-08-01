@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#5a3a28">
+<title>오늘의 발성 연습</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --brown-dark:#2b1f1a; --brown:#5a3a28; --tan:#b5763f; --cream:#fdf6ec;
+    --accent:#8a4a1f; --accent2:#7a2a20; --warn-bg:#fdecec; --warn-border:#c94a4a;
+    --tip-bg:#eef6ee; --tip-border:#4a8a4a; --card-border:#e4c9a4;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ margin:0; padding:0; height:100%; }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR','Malgun Gothic',sans-serif;
+    background:#f7f1e8; color:#2c2420;
+    display:flex; justify-content:center;
+  }
+  #app{ width:100%; max-width:480px; min-height:100vh; background:#fff; display:flex; flex-direction:column; }
+
+  header.top{
+    background:linear-gradient(135deg,var(--brown-dark),var(--brown) 55%,var(--tan));
+    color:var(--cream); padding:22px 20px 26px; position:relative;
+  }
+  header.top .eyebrow{ font-size:11px; letter-spacing:2px; opacity:.8; }
+  header.top h1{ font-size:20px; margin:6px 0 2px; }
+  header.top .sub{ font-size:12.5px; opacity:.85; }
+  header.top .settings-btn{
+    position:absolute; top:18px; right:16px; background:rgba(255,255,255,.15);
+    border:none; color:var(--cream); border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer;
+  }
+
+  main{ flex:1; padding:16px 16px 90px; }
+
+  .progress-strip{ display:flex; gap:5px; margin:14px 0 4px; overflow-x:auto; padding-bottom:4px; }
+  .progress-dot{
+    min-width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center;
+    font-size:10px; color:#8a7a68; background:#f1e6d6; flex-shrink:0;
+  }
+  .progress-dot.done{ background:#4a8a4a; color:#fff; }
+  .progress-dot.today{ outline:2px solid var(--accent); }
+  .progress-dot.rest{ background:#e7dccb; }
+  .progress-label{ font-size:11px; color:#9a8a78; margin-bottom:6px; }
+
+  .card{
+    border:1px solid var(--card-border); border-radius:14px; padding:18px; margin-top:16px;
+    box-shadow:0 2px 10px rgba(90,58,40,.06);
+  }
+  .card .part-badge{
+    display:inline-block; font-size:11px; padding:3px 10px; border-radius:999px; color:#fff; margin-bottom:8px;
+  }
+  .card .day-title{ font-size:19px; font-weight:700; margin:2px 0 10px; color:#3a2413; }
+  .card .meta{ display:flex; flex-wrap:wrap; gap:8px 16px; font-size:12px; color:#6b4a2a; margin-bottom:12px; }
+  .card .meta b{ color:#3a2413; }
+  .section-label{ font-weight:700; color:var(--accent); font-size:13.5px; margin:12px 0 4px; }
+  .card ol{ margin:4px 0 0 18px; padding:0; font-size:13.5px; }
+  .card ol li{ margin-bottom:6px; }
+  .card p.effect-text{ font-size:13.5px; margin:2px 0 0; }
+
+  .rest-card{
+    background:#f4efe4; border:1px dashed #c9b58f; border-radius:14px; padding:18px; margin-top:16px; text-align:center;
+  }
+  .rest-card .big{ font-size:34px; }
+  .rest-card h3{ margin:8px 0 4px; color:var(--accent2); }
+  .rest-card p{ font-size:13px; color:#6b5a45; }
+
+  .warn-box{
+    background:var(--warn-bg); border-left:5px solid var(--warn-border); border-radius:8px;
+    padding:11px 14px; margin-top:14px; font-size:12px; color:#7a2323;
+  }
+  .tip-box{
+    background:var(--tip-bg); border-left:5px solid var(--tip-border); border-radius:8px;
+    padding:11px 14px; margin-top:14px; font-size:12px; color:#2f5a2f;
+  }
+
+  .done-btn{
+    width:100%; margin-top:16px; padding:13px; border:none; border-radius:10px; font-size:14.5px; font-weight:700;
+    background:#eee1cd; color:#5a3a1a; cursor:pointer;
+  }
+  .done-btn.checked{ background:#4a8a4a; color:#fff; }
+
+  .finish-screen, .onboard-screen{
+    padding:40px 20px; text-align:center;
+  }
+  .finish-screen .big, .onboard-screen .big{ font-size:44px; margin-bottom:10px; }
+  .onboard-screen h2, .finish-screen h2{ font-size:20px; color:#3a2413; margin-bottom:8px; }
+  .onboard-screen p, .finish-screen p{ font-size:13.5px; color:#6b5a45; margin-bottom:20px; }
+  .primary-btn{
+    background:var(--accent); color:#fff; border:none; border-radius:10px; padding:13px 22px;
+    font-size:14.5px; font-weight:700; cursor:pointer; width:100%; max-width:280px;
+  }
+  .date-input{ margin:10px auto 18px; display:block; padding:9px 12px; border-radius:8px; border:1px solid #d9c3a2; font-size:14px; }
+
+  .modal-bg{
+    position:fixed; inset:0; background:rgba(30,20,10,.4); display:flex; align-items:center; justify-content:center; z-index:50;
+  }
+  .modal{ background:#fff; border-radius:14px; padding:22px; width:85%; max-width:340px; text-align:center; }
+  .modal h3{ margin-top:0; }
+  .modal .row{ display:flex; gap:10px; margin-top:16px; }
+  .modal button{ flex:1; padding:10px; border-radius:8px; border:none; font-size:13.5px; cursor:pointer; }
+  .modal .cancel{ background:#f1e6d6; color:#5a3a1a; }
+  .modal .confirm{ background:#c94a4a; color:#fff; }
+
+  footer.disclaimer{
+    text-align:center; font-size:10.5px; color:#a99a88; padding:14px 20px 20px;
+  }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ONBOARDING -->
+  <div id="onboard" class="onboard-screen hidden">
+    <div class="big">🎙️</div>
+    <h2>발성 훈련 8주 프로그램</h2>
+    <p>낮고 부드러운 목소리 만들기 (1~4주) + 허스키·샤우팅 발성 (5~8주)<br>오늘부터 시작해볼까요?</p>
+    <input type="date" id="start-date-input" class="date-input">
+    <button class="primary-btn" id="start-btn">이 날짜부터 시작하기</button>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main-view" class="hidden">
+    <header class="top">
+      <div class="eyebrow" id="today-date"></div>
+      <h1 id="day-counter">Day 1 / 56</h1>
+      <div class="sub" id="week-range-label"></div>
+      <button class="settings-btn" id="settings-btn">설정</button>
+    </header>
+    <main>
+      <div class="progress-label">최근 진행 상황</div>
+      <div class="progress-strip" id="progress-strip"></div>
+
+      <div id="content-slot"></div>
+
+      <footer class="disclaimer">본 프로그램은 자가 연습 참고용이며 의학적 진단이나 전문 보컬 레슨을 대체하지 않습니다.<br>목 통증이 있거나 2주 이상 쉰 목소리가 지속되면 즉시 중단하고 전문가와 상담하세요.</footer>
+    </main>
+  </div>
+
+  <!-- FINISH -->
+  <div id="finish-view" class="finish-screen hidden">
+    <div class="big">🎉</div>
+    <h2>8주 프로그램을 완료했어요!</h2>
+    <p>1주차 녹음과 비교해서 들어보고, 앞으로도 필요하면 전문 보컬 트레이너의 지도를 받아보세요.</p>
+    <button class="primary-btn" id="restart-btn">처음부터 다시 시작</button>
+  </div>
+
+</div>
+
+<!-- RESET MODAL -->
+<div id="reset-modal" class="modal-bg hidden">
+  <div class="modal">
+    <h3>설정</h3>
+    <p style="font-size:13px;color:#6b5a45;">시작일을 다시 설정하면 지금까지의 완료 기록은 남아있지만 날짜 계산이 초기화됩니다.</p>
+    <div class="row">
+      <button class="cancel" id="modal-cancel">닫기</button>
+      <button class="confirm" id="modal-reset">시작일 재설정</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- storage (safe wrapper: falls back to memory if localStorage unavailable) ---------- */
+const memoryStore = {};
+const storage = {
+  get(key){
+    try { const v = localStorage.getItem(key); return v === null ? null : v; }
+    catch(e){ return Object.prototype.hasOwnProperty.call(memoryStore,key) ? memoryStore[key] : null; }
+  },
+  set(key, val){
+    try { localStorage.setItem(key, val); }
+    catch(e){ memoryStore[key] = val; }
+  }
+};
+
+/* ---------- program data ---------- */
+// week numbers 1-4 = Part 1 (안정화/저음화), 5-8 = Part 2 (허스키/샤우팅)
+const PROGRAM = [
+  { week:1, part:1, badge:'1부 · 발성 안정화', color:'#8a4a1f',
+    title:'복식호흡 기초 잡기',
+    effect:'목에 걸리던 힘을 배(횡격막)로 분산시켜 목소리의 떨림과 긴장을 줄이고, 이후 모든 훈련의 지지 기반을 만듭니다.',
+    method:[
+      '편히 눕거나 앉아 한 손은 가슴에, 한 손은 배꼽 위에 올립니다.',
+      '코로 4초간 들이쉬며 배가 부풀어 오르는지 확인합니다 (가슴은 거의 움직이지 않아야 함).',
+      '4초간 멈췄다가, 입으로 8초간 천천히 내쉽니다 (풍선 바람 빠지듯 일정하게).',
+      '이 호흡을 10회 반복하고, 아침·저녁 하루 2회 진행합니다.',
+      '익숙해지면 "스~" 소리를 내며 숨을 끝까지 뱉는 훈련을 추가합니다 (목표: 30초 이상).'
+    ],
+    duration:'회당 5~10분 · 아침/저녁 2회', restDays:[] },
+
+  { week:2, part:1, badge:'1부 · 발성 안정화', color:'#8a4a1f',
+    title:'몸과 목의 긴장 풀기',
+    effect:'턱·목·어깨의 불필요한 긴장을 제거해 소리가 걸리지 않고 부드럽게 나오도록 준비하며, 이후 매 연습 전 고정 루틴이 됩니다.',
+    method:[
+      '목을 좌우, 앞뒤로 천천히 스트레칭합니다 (각 방향 10초씩).',
+      '입을 크게 벌렸다 다물며 턱관절 주변을 손으로 원 그리듯 마사지합니다 (1분).',
+      '입술을 붙인 채 "부르르르~" 립트릴을 낮은 음→높은 음→낮은 음 순서로 왕복합니다 (5회).',
+      '혀를 살짝 내밀고 "르르르~" 텅트릴도 동일하게 반복합니다 (5회).'
+    ],
+    duration:'회당 5분 · 매일 발성 전', restDays:[] },
+
+  { week:3, part:1, badge:'1부 · 발성 안정화', color:'#8a4a1f',
+    title:'공명 낮추기 & 새로운 기준음 찾기',
+    effect:'소리의 울림을 코·목 앞쪽이 아닌 가슴 쪽으로 이동시켜 더 낮고 깊은 음색을 만들고, 평소 말할 때 쓸 "기준 음높이"를 찾아 몸에 익힙니다.',
+    method:[
+      '입을 다물고 "음~" 허밍하며, 손을 가슴에 댄 채 진동이 느껴지는 가장 편안한 음을 찾습니다.',
+      '하품하듯 "하아~" 한숨을 쉬고, 그 이완된 상태 그대로 이어서 "음~" 소리를 냅니다 (하품-한숨 기법).',
+      '같은 상태에서 "안녕하세요", "네, 알겠습니다" 같은 짧은 문장을 이어서 말해봅니다.',
+      '매일 같은 문장 5개를 녹음하고, 다음날 들어보며 톤이 낮고 편안하게 유지되는지 체크합니다.'
+    ],
+    duration:'회당 10분 · 매일', restDays:[] },
+
+  { week:4, part:1, badge:'1부 · 발성 안정화', color:'#8a4a1f',
+    title:'실전 적용 & 안정화',
+    effect:'훈련한 낮고 부드러운 톤을 실제 대화, 통화, 발표 등 실전 상황에서도 무너지지 않고 유지하는 능력을 확보합니다.',
+    method:[
+      '매일 뉴스 기사나 책 한 단락(약 3분 분량)을 새 기준음으로 낭독하고 녹음해서 듣습니다.',
+      '실제 통화나 대화 중 의식적으로 낮은 톤을 1회 이상 적용해보고 느낀 점을 메모합니다.',
+      '6~7일차에는 웃음·놀람 등 감정을 넣어도 톤이 급격히 올라가지 않도록 유지하는 연습을 합니다.',
+      '7일차: 1주차 녹음과 비교 청취하며 4주간의 변화를 확인합니다.'
+    ],
+    duration:'회당 10~15분 · 매일 + 실생활 적용', restDays:[] },
+
+  { week:5, part:2, badge:'2부 · 허스키·샤우팅', color:'#7a2a20',
+    title:'보컬 프라이(vocal fry)로 허스키 감각 익히기',
+    effect:'성대를 가볍게 부딪혀 나는 낮고 거친 "드르륵" 질감을 안전하게 익혀, 스크래치 발성의 기초 재료를 만듭니다.',
+    method:[
+      '아침에 목이 편안히 잠긴 상태에서 "어~" 하고 가장 낮게 골골거리는 소리를 내봅니다 (vocal fry).',
+      '편안한 음높이에서 문장 끝을 vocal fry로 흘리듯 마무리합니다 (예: "안녕하세요~"의 끝을 긁듯이).',
+      '낮은 음에서 3~5초간 프라이를 유지한 뒤 자연스러운 음성으로 이어 말하기를 5회 반복합니다.'
+    ],
+    duration:'워밍업 후 5분 · 매일(강도 낮음, 목 상태 확인)', restDays:[],
+    restNote:'오늘도 가볍게 진행하되, 목이 조금이라도 불편하면 쉬어주세요.' },
+
+  { week:6, part:2, badge:'2부 · 허스키·샤우팅', color:'#7a2a20',
+    title:'그르렁(growl) 감각으로 스크래치 만들기',
+    effect:'목을 조이지 않고 목구멍 뒤쪽에서 가볍게 긁는 "그르렁" 질감을 익혀, 실제 스크래치 창법의 핵심 감각을 확보합니다.',
+    method:[
+      '오토바이 엔진소리를 흉내내듯 목구멍 안쪽에서 가볍게 "그르르릉" 소리를 냅니다 (통증 없는 선에서만).',
+      '낮은 음에서 짧게 2~3초씩 그르렁 소리를 내고 바로 힘을 뺍니다. 5회 반복합니다.',
+      '"음~"으로 시작해 그르렁으로 이어졌다가 다시 부드러운 소리로 돌아오는 흐름을 연습합니다.'
+    ],
+    duration:'회당 5~7분 · 주 5일 연습 + 2일 휴식', restDays:[4,7],
+    restNote:'오늘은 회복일입니다. 그르렁 연습은 쉬고, 1부의 호흡·이완 워밍업만 가볍게 해주세요. 성대 회복이 이번 주 핵심입니다.' },
+
+  { week:7, part:2, badge:'2부 · 허스키·샤우팅', color:'#7a2a20',
+    title:'노래 안에서 스크래치 표현하기',
+    effect:'임재범, 황인욱 스타일처럼 한 음절 안에서 스크래치를 살짝 넣었다 빼며 감정을 표현하는 실전 컨트롤을 익힙니다.',
+    method:[
+      '좋아하는 곡의 후렴구 한 소절을 선택합니다.',
+      '모음(아/오/에 등)에 악센트를 주면서, 그 순간에만 짧게 그르렁(스크래치)을 얹습니다 — 포인트에만.',
+      '원곡과 자신의 녹음을 비교하며 스크래치가 들어가는 타이밍과 세기를 조절합니다.',
+      '연습일에는 스크래치를 포함해 완창하고, 격일 패턴을 지킵니다.'
+    ],
+    duration:'회당 10분 · 격일 연습(3일 연습 + 4일 회복)', restDays:[2,4,6,7],
+    restNote:'오늘은 회복일입니다. 스크래치 연습은 쉬고, 원곡을 듣거나 가벼운 허밍만 해주세요.' },
+
+  { week:8, part:2, badge:'2부 · 허스키·샤우팅', color:'#7a2a20',
+    title:'샤우팅(클라이맥스 파워 보컬) 안전하게 접근하기',
+    effect:'곡의 절정부에서 힘 있는 샤우팅 사운드를 성대 손상 위험을 최소화하며 낼 수 있는 기초를 확보합니다.',
+    method:[
+      '충분한 워밍업(호흡+립트릴+허밍) 없이는 절대 시작하지 않습니다.',
+      '벨팅 감각(가슴 공명을 고음까지 끌어올리되 호흡압으로 지지)을 익힙니다 — 짧고 강한 외침을 편안한 고음에서 시도.',
+      '곡의 샤우팅 구간을 짧게(1~2소절) 반복 연습하며, 목이 아닌 호흡압으로 밀어내는 느낌을 유지합니다.',
+      '연습 1일 + 휴식 2~3일 패턴을 철저히 지킵니다 (주 2회만 시행).'
+    ],
+    duration:'회당 10분(워밍업 포함 20분) · 주 2회', restDays:[2,3,5,6,7],
+    restNote:'오늘은 완전 휴식/가벼운 유지일입니다. 샤우팅은 쉬고 호흡·이완만 가볍게 해주세요. 성대 회복이 최우선입니다.' },
+];
+const TOTAL_DAYS = PROGRAM.length * 7; // 56
+
+/* ---------- date helpers ---------- */
+function toDateKey(d){ return d.toISOString().slice(0,10); }
+function todayLocalDate(){
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+function parseDateKey(key){
+  const [y,m,d] = key.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+function daysBetween(a,b){ return Math.round((b-a)/86400000); }
+
+/* ---------- state ---------- */
+const START_KEY = 'vt_start_date';
+function getStartDate(){ return storage.get(START_KEY); }
+function setStartDate(key){ storage.set(START_KEY, key); }
+function completionKey(dateKey){ return 'vt_done_' + dateKey; }
+function isDone(dateKey){ return storage.get(completionKey(dateKey)) === '1'; }
+function setDone(dateKey, val){ storage.set(completionKey(dateKey), val ? '1' : '0'); }
+
+function getProgramDayInfo(globalDay){ // 1-indexed
+  const weekIdx = Math.floor((globalDay-1)/7); // 0-indexed into PROGRAM
+  const dayOfWeek = ((globalDay-1)%7)+1; // 1..7
+  const week = PROGRAM[weekIdx];
+  const isRest = week.restDays.includes(dayOfWeek);
+  return { week, dayOfWeek, isRest };
+}
+
+/* ---------- render ---------- */
+const el = {
+  onboard: document.getElementById('onboard'),
+  mainView: document.getElementById('main-view'),
+  finishView: document.getElementById('finish-view'),
+  startInput: document.getElementById('start-date-input'),
+  startBtn: document.getElementById('start-btn'),
+  todayDate: document.getElementById('today-date'),
+  dayCounter: document.getElementById('day-counter'),
+  weekRangeLabel: document.getElementById('week-range-label'),
+  progressStrip: document.getElementById('progress-strip'),
+  contentSlot: document.getElementById('content-slot'),
+  settingsBtn: document.getElementById('settings-btn'),
+  resetModal: document.getElementById('reset-modal'),
+  modalCancel: document.getElementById('modal-cancel'),
+  modalReset: document.getElementById('modal-reset'),
+  restartBtn: document.getElementById('restart-btn'),
+};
+
+function render(){
+  const startKey = getStartDate();
+  if(!startKey){
+    el.onboard.classList.remove('hidden');
+    el.mainView.classList.add('hidden');
+    el.finishView.classList.add('hidden');
+    const t = todayLocalDate();
+    el.startInput.value = toDateKey(t);
+    return;
+  }
+  const start = parseDateKey(startKey);
+  const today = todayLocalDate();
+  const globalDay = daysBetween(start, today) + 1;
+
+  if(globalDay > TOTAL_DAYS){
+    el.onboard.classList.add('hidden');
+    el.mainView.classList.add('hidden');
+    el.finishView.classList.remove('hidden');
+    return;
+  }
+  el.onboard.classList.add('hidden');
+  el.finishView.classList.add('hidden');
+  el.mainView.classList.remove('hidden');
+
+  const clampedDay = Math.max(1, globalDay);
+  const { week, dayOfWeek, isRest } = getProgramDayInfo(clampedDay);
+
+  el.todayDate.textContent = today.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+  el.dayCounter.textContent = `Day ${clampedDay} / ${TOTAL_DAYS}`;
+  el.weekRangeLabel.textContent = `${week.week}주차 (${week.badge})`;
+
+  // progress strip: show days 1..clampedDay (last up to 14)
+  el.progressStrip.innerHTML = '';
+  const rangeStart = Math.max(1, clampedDay-13);
+  for(let d=rangeStart; d<=clampedDay; d++){
+    const dKeyDate = new Date(start); dKeyDate.setDate(dKeyDate.getDate() + (d-1));
+    const dKey = toDateKey(dKeyDate);
+    const info = getProgramDayInfo(d);
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (isDone(dKey) ? ' done' : (info.isRest ? ' rest':'')) + (d===clampedDay ? ' today':'');
+    dot.textContent = d;
+    dot.title = info.isRest ? `${d}일차 · 휴식` : `${d}일차`;
+    el.progressStrip.appendChild(dot);
+  }
+
+  const todayKeyDate = new Date(start); todayKeyDate.setDate(todayKeyDate.getDate() + (clampedDay-1));
+  const todayKey = toDateKey(todayKeyDate);
+
+  if(isRest){
+    el.contentSlot.innerHTML = `
+      <div class="rest-card">
+        <div class="big">💤</div>
+        <h3>오늘은 휴식일이에요</h3>
+        <p>${week.restNote || '성대를 쉬게 해주는 것도 훈련의 일부입니다.'}</p>
+      </div>
+      <div class="tip-box">휴식일에는 강도 있는 연습 대신 가벼운 호흡·이완 워밍업만 진행하는 것을 권장합니다.</div>
+    `;
+  } else {
+    const methodItems = week.method.map(m => `<li>${m}</li>`).join('');
+    const warnBox = week.part === 2 ? `<div class="warn-box">목이 아프거나 힘들면 즉시 멈추세요. 강하게 연습한 날은 다음날 휴식을 지켜주세요.</div>` : '';
+    el.contentSlot.innerHTML = `
+      <div class="card">
+        <span class="part-badge" style="background:${week.color}">${week.badge}</span>
+        <div class="day-title">${week.title}</div>
+        <div class="meta"><span><b>기간</b> ${week.week}주차 ${dayOfWeek}일째</span><span><b>소요시간</b> ${week.duration}</span></div>
+        <div class="section-label">효과</div>
+        <p class="effect-text">${week.effect}</p>
+        <div class="section-label">연습 방법</div>
+        <ol>${methodItems}</ol>
+        ${warnBox}
+      </div>
+      <button class="done-btn ${isDone(todayKey) ? 'checked' : ''}" id="done-btn">${isDone(todayKey) ? '✓ 오늘 연습 완료함' : '오늘 연습 완료 체크'}</button>
+    `;
+    const doneBtn = document.getElementById('done-btn');
+    doneBtn.addEventListener('click', () => {
+      const nowDone = !isDone(todayKey);
+      setDone(todayKey, nowDone);
+      render();
+    });
+  }
+}
+
+el.startBtn.addEventListener('click', () => {
+  const val = el.startInput.value || toDateKey(todayLocalDate());
+  setStartDate(val);
+  render();
+});
+el.settingsBtn.addEventListener('click', () => el.resetModal.classList.remove('hidden'));
+el.modalCancel.addEventListener('click', () => el.resetModal.classList.add('hidden'));
+el.modalReset.addEventListener('click', () => {
+  storage.set(START_KEY, '');
+  el.resetModal.classList.add('hidden');
+  render();
+});
+el.restartBtn.addEventListener('click', () => {
+  storage.set(START_KEY, '');
+  render();
+});
+
+render();
+
+/* ---------- PWA service worker registration (safe no-op if unsupported) ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
